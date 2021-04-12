@@ -1675,7 +1675,7 @@ bool StorageReplicatedMergeTree::tryExecuteMerge(const LogEntry & entry)
             future_merged_part, metadata_snapshot, *merge_entry,
             table_lock, entry.create_time, global_context, reserved_space, entry.deduplicate, entry.deduplicate_by_columns);
 
-        merger_mutator.renameMergedTemporaryPart(part, parts, &transaction);
+        merger_mutator.renameMergedTemporaryPart(part, parts, nullptr, &transaction);
 
         try
         {
@@ -2977,7 +2977,7 @@ void StorageReplicatedMergeTree::mergeSelectingTask()
                 future_merged_part.uuid = UUIDHelpers::generateV4();
 
             if (max_source_parts_size_for_merge > 0 &&
-                merger_mutator.selectPartsToMerge(future_merged_part, false, max_source_parts_size_for_merge, merge_pred, merge_with_ttl_allowed, nullptr) == SelectPartsDecision::SELECTED)
+                merger_mutator.selectPartsToMerge(future_merged_part, false, max_source_parts_size_for_merge, merge_pred, merge_with_ttl_allowed, nullptr, nullptr) == SelectPartsDecision::SELECTED)
             {
                 create_result = createLogEntryToMergeParts(
                     zookeeper,
@@ -4345,7 +4345,7 @@ bool StorageReplicatedMergeTree::optimize(
                 if (!partition)
                 {
                     select_decision = merger_mutator.selectPartsToMerge(
-                        future_merged_part, true, storage_settings_ptr->max_bytes_to_merge_at_max_space_in_pool, can_merge, false, &disable_reason);
+                        future_merged_part, true, storage_settings_ptr->max_bytes_to_merge_at_max_space_in_pool, can_merge, false, nullptr, &disable_reason);
                 }
                 else
                 {

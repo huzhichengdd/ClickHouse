@@ -40,20 +40,20 @@ void MergeTreeTransactionHolder::onDestroy() noexcept
     if (txn->getState() != MergeTreeTransaction::RUNNING)
         return;
 
-    if (autocommit)
+    if (autocommit && std::uncaught_exceptions() == 0)
     {
         try
         {
             TransactionLog::instance().commitTransaction(txn);
+            return;
         }
         catch (...)
         {
             tryLogCurrentException(__PRETTY_FUNCTION__);
         }
-    } else
-    {
-        TransactionLog::instance().rollbackTransaction(txn);
     }
+
+    TransactionLog::instance().rollbackTransaction(txn);
 }
 
 MergeTreeTransactionHolder::MergeTreeTransactionHolder(const MergeTreeTransactionHolder &)

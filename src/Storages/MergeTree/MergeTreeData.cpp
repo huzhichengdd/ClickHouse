@@ -3080,14 +3080,14 @@ String MergeTreeData::getPartitionIDFromQuery(const ASTPtr & ast, const Context 
 
 DataPartsVector MergeTreeData::getDataPartsVector(const Context & context) const
 {
-    if (auto txn = context.getCurrentTransaction())
-        return getVisibleDataPartsVector(*txn);
-    else
-        return getDataPartsVector();
+    return getVisibleDataPartsVector(context.getCurrentTransaction());
 }
 
-MergeTreeData::DataPartsVector MergeTreeData::getVisibleDataPartsVector(const MergeTreeTransaction & txn) const
+MergeTreeData::DataPartsVector MergeTreeData::getVisibleDataPartsVector(const MergeTreeTransactionPtr & txn) const
 {
+    if (!txn)
+        return getDataPartsVector();
+
     DataPartsVector maybe_visible_parts = getDataPartsVector({DataPartState::PreCommitted, DataPartState::Committed, DataPartState::Outdated});
     if (maybe_visible_parts.empty())
         return maybe_visible_parts;
@@ -3096,7 +3096,7 @@ MergeTreeData::DataPartsVector MergeTreeData::getVisibleDataPartsVector(const Me
     auto it_last = maybe_visible_parts.end() - 1;
     while (it <= it_last)
     {
-        if ((*it)->versions.isVisible(txn))
+        if ((*it)->versions.isVisible(*txn))
         {
             ++it;
         }
